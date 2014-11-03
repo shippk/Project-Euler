@@ -1,0 +1,22 @@
+from __future__ import division
+
+# Generate list of first 100 triangle numbers
+triangleNumbers = [int(1/2*(i+1)*(i+2)) for i in range(100)]
+    
+# Read in file contents
+path = r"C:\Users\kshipp\Desktop\p042_words.txt"
+
+with open(path) as f:
+    l = f.next().replace('"', '').split(',')
+
+# Count the number of triangle words
+counter = 0
+for item in l:
+    temp = item
+    total = 0
+    for letter in temp:
+        total += ord(letter) - 64
+    if total in triangleNumbers:
+        counter += 1
+        
+print counter
