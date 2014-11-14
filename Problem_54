@@ -1,0 +1,124 @@
+def maxByFreq(list1,list2):
+    '''
+    From two lists of numbers, return an indicator for which list has the greater number, stepping from most to least frequently occuring number in lists.
+    '''
+    # Generate list (indexes mirror input lists) with the frequencies of each item in original list
+    freq1 = [list1.count(i) for i in list1]
+    freq2 = [list2.count(i) for i in list2]
+    
+    # Generate list of items from original list that occur most frequently in list (could be multiple values)
+    max1 = reduceMaxOcc(freq1,list1)
+    max2 = reduceMaxOcc(freq2,list2)
+    
+    # If maximum value does not break the tie, recursively call maxByFreq, removing the current max value
+    if max(max1) == max(max2):
+        maxByFreq(removeAll(list1,max1),removeAll(list2,max2))
+    
+    return max(max1) < max(max2)
+
+def reduceMaxOcc(freq,baseList):
+    '''
+    Return a list of all items in baseList that occur as frequently as max of freq
+    '''
+    returnList = baseList
+    for i in baseList:
+        if baseList.count(i) != max(freq):
+            returnList = removeAll(returnList,i)
+    return returnList
+
+def removeAll(inputList,removeValue):
+    '''
+    Removes all occurences of removeValue from inputList and returns inputList
+    '''
+    if removeValue in inputList:
+        inputList.remove(removeValue)
+        removeAll(inputList,removeValue)
+    return inputList
+
+def identifyHand(handList):
+    '''
+    Takes a list of cards and returns hand as tuple (first argument name of hand, second score used to rank hands)
+    '''
+    # Make list is composed of permissible values
+    for item in handList:
+        assert (int(item[:-1]) == float(item[:-1]) and (int(item[:-1]) >= 2) and (int(item[:-1]) <=14))
+        assert item[-1:] in ['H','C','S','D']
+    
+    # Set parameters for determining hand
+    valHand = sorted([int(x[:-1]) for x in handList])
+    sameSuit = handList[0][-1:] == handList[1][-1:] == handList[2][-1:] == handList[3][-1:] == handList[4][-1:]
+    consecutiveValues = (((valHand[0]+1) == valHand[1]) and ((valHand[1]+1) == valHand[2]) and ((valHand[2]+1) == valHand[3]) and ((valHand[3]+1) == valHand[4]) and ((valHand[0] + 1) == valHand[1]))
+    numKind = sorted([valHand.count(i) for i in list(set(valHand))],reverse=True)
+    
+    # Royal flush
+    if (sameSuit and consecutiveValues and (handList[0][:-1] == 10)):
+        return ('Royal flush',1)
+    # Straight flush
+    elif (sameSuit and consecutiveValues):
+        return ('Straight flush',2)
+    # Four of a kind
+    elif (numKind[0]==4):
+        return ('Four of a kind',3)
+    # Full house
+    elif (numKind[0]==3) and (numKind[1]==2):
+        return ('Full house',4)
+    # Flush
+    elif sameSuit:
+        return ('Flush',5)
+    # Straight
+    elif (consecutiveValues):
+        return ('Straight',6)
+    # Three of a kind
+    elif (numKind[0]==3):
+        return ('Three of a kind',7)
+    # Two pairs
+    elif (numKind[0]==2 and numKind[1]==2):
+        return ('Two pairs',8)
+    # One pair
+    elif (numKind[0]==2):
+        return ('One pair',9)
+    # Highest card
+    else:
+        return ('Highest value card',0)
+    
+# Read file of hands and tally winning points for player 1 and player 2
+filePath = r"C:\Users\kshipp\Desktop\p054_poker.txt"
+
+playerWins = [0,0]
+c=0
+
+with open(filePath) as f:
+    for line in f:
+        if c%100 == 0:
+            print "Finished evaluating %d hands" % (c)
+            
+        # Generate list of 5 strings, coded for hand. The first character is number (Jacks are 11, Queen 12, King 13, and Ace 14). The second character identifies suit (H - hearts, C - clubs, S - spades, D - diamonds)
+        p1 = line.split()[:5]
+        p2 = line.split()[5:]
+        p1 = [x.replace('T','10').replace('J','11').replace('Q','12').replace('K','13').replace('A','14') for x in p1]
+        p2 = [x.replace('T','10').replace('J','11').replace('Q','12').replace('K','13').replace('A','14') for x in p2]
+        
+        # Genreate tuples that identify hand ranking
+        p1Hand = identifyHand(p1)
+        p2Hand = identifyHand(p2)
+        
+        # Add one to the winner's score #
+        # First - if the hands differ, take the better hand
+        if (int(p1Hand[1]) != int(p2Hand[1])):
+            playerWins[int(p1Hand[1]) > int(p2Hand[1])] += 1
+        else:
+            # Extract card number from hand
+            p1Nums = [int(x[:-1]) for x in p1]
+            p2Nums = [int(x[:-1]) for x in p2]
+            # Find the greater card value, sorting by frequency of value occurence
+            if p1Hand[0] in ['Four of a kind', 'Full house', 'Three of a kind', 'Two pairs', 'One pair']:
+                playerWins[maxByFreq(p1Nums,p2Nums)] += 1
+            # If card values do not occur more than once, take the highest value card
+            else:
+                playerWins[max(p1Nums) < max(p2Nums)] += 1
+        c += 1
+                
+print playerWins[0]
+print "Finished!"
+
+#eof#
