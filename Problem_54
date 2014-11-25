@@ -1,38 +1,45 @@
+import csv
+
 def maxByFreq(list1,list2):
     '''
     From two lists of numbers, return an indicator for which list has the greater number, stepping from most to least frequently occuring number in lists.
     '''
+    tempList1 = list(list1)
+    tempList2 = list(list2)
+    
     # Generate list (indexes mirror input lists) with the frequencies of each item in original list
     freq1 = [list1.count(i) for i in list1]
     freq2 = [list2.count(i) for i in list2]
     
     # Generate list of items from original list that occur most frequently in list (could be multiple values)
-    max1 = reduceMaxOcc(freq1,list1)
-    max2 = reduceMaxOcc(freq2,list2)
+    max1 = reduceMaxOcc(freq1,tempList1)
+    max2 = reduceMaxOcc(freq2,tempList2)
     
     # If maximum value does not break the tie, recursively call maxByFreq, removing the current max value
     if max(max1) == max(max2):
-        maxByFreq(removeAll(list1,max1),removeAll(list2,max2))
-    
-    return max(max1) < max(max2)
+        return maxByFreq(removeAll(list1,max1),removeAll(list2,max2))
+    else:
+        return max(max1) < max(max2)
 
 def reduceMaxOcc(freq,baseList):
     '''
     Return a list of all items in baseList that occur as frequently as max of freq
     '''
-    returnList = baseList
+    toRemove = []
     for i in baseList:
         if baseList.count(i) != max(freq):
-            returnList = removeAll(returnList,i)
-    return returnList
+            toRemove.append(i)
+    removeAll(baseList,toRemove)
+    return baseList
 
-def removeAll(inputList,removeValue):
+def removeAll(inputList,removeValueList):
     '''
     Removes all occurences of removeValue from inputList and returns inputList
     '''
-    if removeValue in inputList:
-        inputList.remove(removeValue)
-        removeAll(inputList,removeValue)
+    for removeValue in removeValueList:
+        if removeValue in inputList:
+            inputList.remove(removeValue)
+            removeAll(inputList,[removeValue])
     return inputList
 
 def identifyHand(handList):
@@ -79,13 +86,15 @@ def identifyHand(handList):
         return ('One pair',9)
     # Highest card
     else:
-        return ('Highest value card',0)
+        return ('Highest value card',10)
     
 # Read file of hands and tally winning points for player 1 and player 2
-filePath = r"C:\Users\kshipp\Desktop\p054_poker.txt"
-
+filePath = r"C:\Users\kshipp\Desktop\Personal\Practice\Project Euler\p054_poker.txt"
+outputCheckPath = r"C:\Users\kshipp\Desktop\Personal\Practice\Project Euler\output check.csv"
 playerWins = [0,0]
 c=0
+outputFile = csv.writer(open(outputCheckPath,'wb'))
+outputFile.writerow(['H1','H1','H1','H1','H1','H2','H2','H2','H2','H2','Winner'])
 
 with open(filePath) as f:
     for line in f:
@@ -116,6 +125,11 @@ with open(filePath) as f:
             # If card values do not occur more than once, take the highest value card
             else:
                 playerWins[max(p1Nums) < max(p2Nums)] += 1
+                
+        # Save and output results
+        outputLine = line.split()
+        outputLine.append(playerWins[-1])
+        outputFile.writerow(outputLine)
         c += 1
                 
 print playerWins[0]
